@@ -1,20 +1,45 @@
 # CourseGround
 
-CourseGround is an evidence-first Streamlit application for asking grounded questions about course materials. It indexes PDF, CSV, DOCX, and TXT files, keeps retrieval scoped to one course at a time, and shows the retrieved source evidence beside every supported answer.
+CourseGround is an evidence-first Streamlit application for asking grounded questions about course materials. It ingests PDF, CSV, DOCX, and TXT files, retrieves only from the selected course, and presents the supporting evidence beside every answer.
 
-## What is included
+## Highlights
 
-- Three public sample courses: CS 4780 Machine Learning, HIST 202 Modern History, and BIO 305 Molecular Biology.
-- AI-Based Programming can be used locally for testing, but its real course PDFs are excluded from GitHub. Upload them after deployment if you have permission to use them in the cloud.
-- Loaders that preserve course, file name, format, page, section, row, and chunk ID metadata.
-- Configurable text chunking, local persistent vector search, and strict course-level filtering.
-- OpenRouter integrations for `nvidia/nemotron-3-embed-1b:free` embeddings and `google/gemma-4-26b-a4b-it:free` generation.
-- A deterministic local embedding and answer preview mode when no API key is configured.
-- Tests for supported/malformed files, chunking, source isolation, citations, fallbacks, and retrieved prompt injection.
+- Course-scoped retrieval with citations, excerpts, and source locations.
+- Create courses, upload materials, and build indexes directly from the sidebar.
+- OpenRouter embeddings via `nvidia/nemotron-3-embed-1b:free` and grounded generation via `google/gemma-4-26b-a4b-it:free`.
+- Safe fallbacks for insufficient evidence and temporary provider availability issues.
+- Support for PDF, CSV, DOCX, and TXT with page, section, row, file, course, and chunk metadata.
+- A local vector store and deterministic preview mode for development without an API key.
 
-## Setup on `D:`
+## Public sample data and privacy
 
-The project is designed to keep its virtual environment, data, caches, uploads, and vector index on the project drive. From PowerShell:
+The repository includes three public sample courses:
+
+- CS 4780: Machine Learning
+- HIST 202: Modern History
+- BIO 305: Molecular Biology
+
+The real AI-Based Programming PDFs remain local on `D:` and are excluded from Git. Upload private or licensed materials only when you are authorized to process them with your selected AI provider.
+
+## Architecture
+
+```text
+Streamlit UI
+  ├── Course management and file upload
+  ├── CourseIndexer
+  │   ├── PDF, CSV, DOCX, and TXT loaders
+  │   ├── Text cleaning and configurable chunking
+  │   ├── OpenRouter embeddings or local fallback embeddings
+  │   └── JSON-backed vector store
+  └── GroundedAnswerer
+      ├── Course-filtered similarity search
+      ├── Source-only prompt construction
+      └── Answer, citations, evidence preview, or safe fallback
+```
+
+## Local setup
+
+Developed and tested with Python 3.11 on Windows. All local runtime data stays on `D:`.
 
 ```powershell
 cd 'D:\INSTANT TRAINING\4th Sprint\2nd project'
@@ -26,64 +51,85 @@ py -3.11 -m venv .venv
 Copy-Item .env.example .env
 ```
 
-Add your `OPENROUTER_API_KEY` to `.env`. Do not place keys in Streamlit widgets or source code.
+Set `OPENROUTER_API_KEY` in `.env`. Never commit this file.
 
-Generate the included binary sample materials, then start the application:
+Generate the binary sample documents and launch the application:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\generate_sample_assets.py
 .\.venv\Scripts\python.exe -m streamlit run app.py
 ```
 
-Open the app, select a course, and choose **Index course materials** from the sidebar. The local preview mode works without a key, but an OpenRouter key enables the configured embedding and generation models.
+Open http://127.0.0.1:8501.
 
-To add a course entirely in the app, open **Create course** in the sidebar, provide a course code and name, then upload its PDFs, CSVs, DOCX files, or TXT files. Select **Rebuild course index** once the files are saved. The custom course catalog and uploaded files remain local on `D:`.
+## Using the application
 
-If you add or change the API key, embedding model, chunk size, or overlap after indexing, CourseGround will show **Re-index needed**. Rebuild that course before asking questions so retrieval and stored vectors use the same settings.
+### Add or update a course
 
-## Architecture
+1. Open **Create course** in the sidebar.
+2. Enter a course code and name. The new course is selected automatically.
+3. Open **Upload materials** and save PDF, CSV, DOCX, or TXT files.
+4. Select **Index course materials** or **Rebuild course index**.
+5. Ask questions from the persistent composer at the bottom of the page.
 
-```text
-Streamlit UI
-  ├─ uploader + course selector
-  ├─ CourseIndexer
-  │   ├─ PDF / CSV / DOCX / TXT loaders
-  │   ├─ normalizer + configurable chunker
-  │   ├─ OpenRouter embedding client (or local fallback)
-  │   └─ JSON-backed local vector store
-  └─ GroundedAnswerer
-      ├─ selected-course similarity search
-      ├─ grounded OpenRouter prompt
-      └─ answer + source citations / safe fallback
-```
+Custom courses, uploads, and indexes are local runtime data. They are stored under `data/` and excluded from Git.
 
-The index is saved at `data/index/courseground-vectors.json`; uploaded files are saved under `data/uploads/<course>/`. Both are local, ignored by Git, and stay on `D:`.
+### Re-indexing rules
 
-## Environment variables
+Rebuild a course index after changing any of the following:
+
+- `OPENROUTER_EMBEDDING_MODEL`
+- `COURSEGROUND_CHUNK_SIZE`
+- `COURSEGROUND_CHUNK_OVERLAP`
+
+Changing the chat model or fallback models requires an app restart, but not a new embedding index.
+
+## Configuration
+
+Copy `.env.example` to `.env` for local development. The most relevant variables are:
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
-| `OPENROUTER_API_KEY` | Enables OpenRouter requests | unset, local preview mode |
-| `OPENROUTER_EMBEDDING_MODEL` | OpenRouter embedding model | `nvidia/nemotron-3-embed-1b:free` |
-| `OPENROUTER_CHAT_MODEL` | OpenRouter chat model | `google/gemma-4-26b-a4b-it:free` |
-| `OPENROUTER_FALLBACK_MODELS` | Comma-separated backup model IDs used by OpenRouter after a primary-model error | unset |
-| `OPENROUTER_SITE_URL` | Optional OpenRouter application URL attribution | `http://localhost:8501` |
-| `OPENROUTER_APP_NAME` | Optional OpenRouter application title attribution | `CourseGround` |
+| `OPENROUTER_API_KEY` | Enables OpenRouter requests | Unset, local preview mode |
+| `OPENROUTER_EMBEDDING_MODEL` | Embedding model | `nvidia/nemotron-3-embed-1b:free` |
+| `OPENROUTER_CHAT_MODEL` | Primary answer model | `google/gemma-4-26b-a4b-it:free` |
+| `OPENROUTER_FALLBACK_MODELS` | Comma-separated failover models | Unset |
 | `COURSEGROUND_TOP_K` | Retrieved passages | `4` |
-| `COURSEGROUND_CHUNK_SIZE` | Character chunk size | `900` |
-| `COURSEGROUND_CHUNK_OVERLAP` | Overlapping characters | `160` |
-| `COURSEGROUND_MIN_RELEVANCE` | Minimum cosine score for an answer | `0.18` |
+| `COURSEGROUND_CHUNK_SIZE` | Chunk size in characters | `900` |
+| `COURSEGROUND_CHUNK_OVERLAP` | Chunk overlap in characters | `160` |
+| `COURSEGROUND_MIN_RELEVANCE` | Minimum similarity threshold | `0.18` |
 
-## Test and evaluation
+OpenRouter rate limits can affect free models. Configure compatible fallback models to enable documented OpenRouter failover.
+
+## Testing
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
-Evaluation prompts and expected answer terms are in `data/evaluation/questions.json`. Before a deployment, re-run the evaluation after changing chunk parameters, embedding models, or materials and manually inspect: retrieval relevance, groundedness, citation accuracy, no-answer behavior, and cross-course isolation.
+The suite covers supported and malformed files, chunking, embedding requests, catalog creation, course isolation, prompt-injection resistance, citations, relevance fallbacks, and model-failure evidence previews.
 
-CourseGround uses OpenRouter's documented OpenAI-compatible client, float-format embeddings, application attribution headers, and optional `models` fallback routing. Add one or more suitable backup model IDs to `OPENROUTER_FALLBACK_MODELS` if the primary provider is frequently rate-limited.
+Evaluation prompts live in `data/evaluation/questions.json`.
 
-## Deployment
+## Publish to GitHub
 
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the GitHub and Streamlit Community Cloud release checklist. The Community Cloud entrypoint is `app.py`; set all secrets in Community Cloud's **Advanced settings**, never in a committed `.env` file. Uploaded materials and generated indexes should be treated as rebuildable deployment data.
+Before publishing, review the staged files carefully. `.env`, Streamlit secrets, generated indexes, uploads, custom-course data, and the real AI-Based Programming PDFs are ignored.
+
+```powershell
+git status
+git add .
+git diff --cached
+git commit -m "Prepare CourseGround for deployment"
+git remote add origin https://github.com/YOUR-ACCOUNT/YOUR-REPOSITORY.git
+git push -u origin main
+```
+
+## Deploy on Streamlit Community Cloud
+
+1. Sign in at [Streamlit Community Cloud](https://share.streamlit.io/) and connect the GitHub account that owns the repository.
+2. Select **Create app**, choose the repository and `main` branch, then set `app.py` as the entrypoint.
+3. In **Advanced settings**, select Python 3.11 to match the tested environment.
+4. Paste a completed version of `.streamlit/secrets.toml.example` into the **Secrets** field. Replace the placeholder API key with your real key.
+5. Deploy, then upload any non-public course materials in the app and build their indexes.
+
+Community Cloud installs dependencies from the root `requirements.txt` and loads Streamlit configuration from `.streamlit/config.toml`. Keep all secrets in Community Cloud settings, never in Git.
