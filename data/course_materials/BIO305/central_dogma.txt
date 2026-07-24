@@ -1,0 +1,13 @@
+# Unit 2: From DNA to Protein
+
+## Transcription
+
+Transcription uses a DNA template to synthesize an RNA molecule. In eukaryotic cells, transcription occurs primarily in the nucleus. RNA polymerase reads the DNA template strand and produces complementary RNA in the 5' to 3' direction.
+
+## Translation
+
+Translation uses the codon sequence of messenger RNA to synthesize a polypeptide. Ribosomes carry out translation, while transfer RNAs bring amino acids that correspond to mRNA codons. Translation occurs in the cytoplasm or on the rough endoplasmic reticulum.
+
+## Comparing the processes
+
+Transcription produces RNA from DNA; translation produces protein from RNA. Both rely on complementary molecular recognition, but their templates, products, and cellular machinery are different.

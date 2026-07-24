@@ -1,0 +1,7 @@
+streamlit>=1.57,<2
+openai>=1.70,<2
+python-dotenv>=1.0,<2
+pypdf>=5.0,<7
+python-docx>=1.1,<2
+reportlab>=4.2,<5
+pytest>=8.0,<10

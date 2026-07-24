@@ -1,0 +1,4 @@
+concept,definition,practical_note
+cross-validation,"Repeatedly train on part of the data and validate on a held-out fold.","Use validation performance to compare regularization strengths."
+bias-variance trade-off,"Reducing variance can increase bias; prediction error depends on both.","A simpler model may generalize better when training data are noisy."
+test set,"A final held-out set for estimating generalization after model choices are fixed.","Do not tune regularization using the test set."

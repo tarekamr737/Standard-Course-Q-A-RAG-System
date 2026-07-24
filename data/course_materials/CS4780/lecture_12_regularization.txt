@@ -1,0 +1,13 @@
+# Lecture 12: Regularization and Model Selection
+
+## Why regularize?
+
+Overfitting occurs when a model fits idiosyncratic noise in the training data rather than a stable pattern. A regularizer adds a penalty to the training objective, limiting model complexity. This can increase bias slightly while reducing variance, which often improves performance on previously unseen examples.
+
+## Ridge and lasso
+
+Ridge regression adds an L2 penalty proportional to the sum of squared coefficients. The penalty shrinks coefficients toward zero but usually does not set them exactly to zero. Lasso adds an L1 penalty proportional to the sum of absolute coefficient values. It can set some coefficients exactly to zero, so it can perform variable selection.
+
+## Choosing a penalty
+
+The regularization strength is a hyperparameter. Choose it using validation data or cross-validation, rather than selecting a value after looking at the test set. The test set is reserved for the final estimate of generalization performance.

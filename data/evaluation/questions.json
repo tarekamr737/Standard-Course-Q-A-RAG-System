@@ -1,0 +1,32 @@
+[
+  {
+    "course": "CS4780",
+    "question": "How does regularization prevent overfitting?",
+    "expected_answer_terms": ["penalty", "complexity", "variance"],
+    "expected_source": "lecture_12_regularization.txt"
+  },
+  {
+    "course": "HIST202",
+    "question": "What conditions helped industrialization begin in Britain?",
+    "expected_answer_terms": ["coal", "capital", "markets"],
+    "expected_source": "industrial_change.txt"
+  },
+  {
+    "course": "BIO305",
+    "question": "How does transcription differ from translation?",
+    "expected_answer_terms": ["DNA", "RNA", "protein"],
+    "expected_source": "central_dogma.txt"
+  },
+  {
+    "course": "BIO305",
+    "question": "When is the final exam?",
+    "expected_answer_terms": [],
+    "expected_source": null
+  },
+  {
+    "course": "AI based",
+    "question": "Why is data engineering important for reliable AI systems?",
+    "expected_answer_terms": ["data pipelines", "reliably", "scalability"],
+    "expected_source": "Lecture 2.pdf"
+  }
+]

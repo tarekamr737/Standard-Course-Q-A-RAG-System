@@ -1,0 +1,32 @@
+[theme]
+base = "light"
+primaryColor = "#0043AE"
+backgroundColor = "#FAF8FF"
+secondaryBackgroundColor = "#F2F3FF"
+textColor = "#131B2E"
+borderColor = "#C3C6D6"
+greenColor = "#08745C"
+greenBackgroundColor = "#D9F7EA"
+greenTextColor = "#065946"
+orangeColor = "#9A6100"
+orangeBackgroundColor = "#FFF0C5"
+orangeTextColor = "#6D4300"
+redColor = "#BA1A1A"
+redBackgroundColor = "#FFDAD6"
+redTextColor = "#93000A"
+font = "sans-serif"
+headingFont = "sans-serif"
+baseRadius = "small"
+buttonRadius = "small"
+showWidgetBorder = true
+showSidebarBorder = true
+
+[theme.sidebar]
+backgroundColor = "#F2F3FF"
+secondaryBackgroundColor = "#EAEFFF"
+textColor = "#131B2E"
+borderColor = "#C3C6D6"
+primaryColor = "#0043AE"
+
+[server]
+maxUploadSize = 50
