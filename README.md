@@ -1,5 +1,10 @@
 # CourseGround
 
+<img width="1920" height="1080" alt="Screenshot 2026-07-24 210010" src="https://github.com/user-attachments/assets/ff223c04-e666-4a38-afb3-11353d6c5a3d" />
+
+<img width="1920" height="1080" alt="Screenshot 2026-07-24 210213" src="https://github.com/user-attachments/assets/8d8aeff7-3efd-49f3-a0f3-6790d6ac0a27" />
+
+
 CourseGround is an evidence-first Streamlit application for asking grounded questions about course materials. It ingests PDF, CSV, DOCX, and TXT files, retrieves only from the selected course, and presents the supporting evidence beside every answer.
 
 ## Highlights
@@ -19,8 +24,6 @@ The repository includes three public sample courses:
 - HIST 202: Modern History
 - BIO 305: Molecular Biology
 
-The real AI-Based Programming PDFs remain local on `D:` and are excluded from Git. Upload private or licensed materials only when you are authorized to process them with your selected AI provider.
-
 ## Architecture
 
 ```text
@@ -37,30 +40,6 @@ Streamlit UI
       └── Answer, citations, evidence preview, or safe fallback
 ```
 
-## Local setup
-
-Developed and tested with Python 3.11 on Windows. All local runtime data stays on `D:`.
-
-```powershell
-cd 'D:\INSTANT TRAINING\4th Sprint\2nd project'
-$env:PIP_CACHE_DIR = "$PWD\.cache\pip"
-$env:TEMP = "$PWD\.cache\tmp"
-$env:TMP = $env:TEMP
-py -3.11 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-Copy-Item .env.example .env
-```
-
-Set `OPENROUTER_API_KEY` in `.env`. Never commit this file.
-
-Generate the binary sample documents and launch the application:
-
-```powershell
-.\.venv\Scripts\python.exe scripts\generate_sample_assets.py
-.\.venv\Scripts\python.exe -m streamlit run app.py
-```
-
-Open http://127.0.0.1:8501.
 
 ## Using the application
 
@@ -111,25 +90,3 @@ The suite covers supported and malformed files, chunking, embedding requests, ca
 
 Evaluation prompts live in `data/evaluation/questions.json`.
 
-## Publish to GitHub
-
-Before publishing, review the staged files carefully. `.env`, Streamlit secrets, generated indexes, uploads, custom-course data, and the real AI-Based Programming PDFs are ignored.
-
-```powershell
-git status
-git add .
-git diff --cached
-git commit -m "Prepare CourseGround for deployment"
-git remote add origin https://github.com/YOUR-ACCOUNT/YOUR-REPOSITORY.git
-git push -u origin main
-```
-
-## Deploy on Streamlit Community Cloud
-
-1. Sign in at [Streamlit Community Cloud](https://share.streamlit.io/) and connect the GitHub account that owns the repository.
-2. Select **Create app**, choose the repository and `main` branch, then set `app.py` as the entrypoint.
-3. In **Advanced settings**, select Python 3.11 to match the tested environment.
-4. Paste a completed version of `.streamlit/secrets.toml.example` into the **Secrets** field. Replace the placeholder API key with your real key.
-5. Deploy, then upload any non-public course materials in the app and build their indexes.
-
-Community Cloud installs dependencies from the root `requirements.txt` and loads Streamlit configuration from `.streamlit/config.toml`. Keep all secrets in Community Cloud settings, never in Git.
