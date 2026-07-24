@@ -1,4 +1,5 @@
 .env
+.streamlit/secrets.toml
 .venv/
 .cache/
 __pycache__/
@@ -6,6 +7,9 @@ __pycache__/
 *.py[cod]
 data/index/
 data/uploads/
+data/course_catalog.json
 data/generated/
+# Local-only teaching material. It stays available on D: but is not public GitHub content.
+data/course_materials/AI based/
 coverage.xml
 .coverage

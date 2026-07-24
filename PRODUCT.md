@@ -41,7 +41,7 @@ The system supports three courses and accepts PDF, CSV, DOCX, and TXT files. It 
 - Clear loading, success, warning, and error states.
 
 ## AI Stack
-- LLM: `google/gemma-4-31b-it:free` through OpenRouter.
+- LLM: `google/gemma-4-26b-a4b-it:free` through OpenRouter.
 - Embeddings: `nvidia/nemotron-3-embed-1b:free` through OpenRouter.
 - Retrieval: vector similarity search with metadata filtering.
 - Response policy: answer only from retrieved course content.

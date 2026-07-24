@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import os
+import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -14,6 +16,8 @@ DATA_DIR = ROOT_DIR / "data"
 MATERIALS_DIR = DATA_DIR / "course_materials"
 UPLOADS_DIR = DATA_DIR / "uploads"
 INDEX_DIR = DATA_DIR / "index"
+COURSE_CATALOG_PATH = DATA_DIR / "course_catalog.json"
+COURSE_CODE_PATTERN = re.compile(r"[A-Za-z0-9][A-Za-z0-9 _-]{0,47}")
 
 
 COURSES: dict[str, dict[str, str]] = {
@@ -48,6 +52,70 @@ COURSES: dict[str, dict[str, str]] = {
 }
 
 
+def _custom_courses() -> dict[str, dict[str, str]]:
+    """Read locally created courses without allowing a broken catalog to stop the app."""
+    if not COURSE_CATALOG_PATH.exists():
+        return {}
+    try:
+        payload = json.loads(COURSE_CATALOG_PATH.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    courses: dict[str, dict[str, str]] = {}
+    for code, details in payload.items():
+        if not isinstance(code, str) or not COURSE_CODE_PATTERN.fullmatch(code):
+            continue
+        if not isinstance(details, dict) or not isinstance(details.get("name"), str):
+            continue
+        name = details["name"].strip()
+        if not name:
+            continue
+        courses[code] = {
+            "name": name,
+            "short_name": str(details.get("short_name") or name).strip(),
+            "description": str(details.get("description") or "Course materials ready for indexing.").strip(),
+            "accent": str(details.get("accent") or "#0043AE"),
+            "sample_question": str(details.get("sample_question") or "What are the most important concepts in the indexed material?").strip(),
+        }
+    return courses
+
+
+def load_courses() -> dict[str, dict[str, str]]:
+    """Return built-in courses plus locally created courses."""
+    courses = {code: details.copy() for code, details in COURSES.items()}
+    courses.update({code: details for code, details in _custom_courses().items() if code not in courses})
+    return courses
+
+
+def create_course(code: str, name: str, description: str = "", sample_question: str = "") -> str:
+    """Persist a user-created course and initialize its D: storage directories."""
+    code = code.strip()
+    name = name.strip()
+    if not COURSE_CODE_PATTERN.fullmatch(code):
+        raise ValueError("Course code may use letters, numbers, spaces, hyphens, and underscores only.")
+    if not name:
+        raise ValueError("Course name is required.")
+    if code in load_courses():
+        raise ValueError(f"A course with code '{code}' already exists.")
+
+    catalog = _custom_courses()
+    catalog[code] = {
+        "name": name,
+        "short_name": name,
+        "description": description.strip() or "Course materials ready for indexing.",
+        "accent": "#0043AE",
+        "sample_question": sample_question.strip() or "What are the most important concepts in the indexed material?",
+    }
+    COURSE_CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    temporary = COURSE_CATALOG_PATH.with_suffix(".tmp")
+    temporary.write_text(json.dumps(catalog, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(COURSE_CATALOG_PATH)
+    for directory in (MATERIALS_DIR / code, UPLOADS_DIR / code):
+        directory.mkdir(parents=True, exist_ok=True)
+    return code
+
+
 @dataclass(frozen=True)
 class Settings:
     """Runtime settings loaded from environment variables, never from the UI."""
@@ -76,7 +144,7 @@ class Settings:
                 "OPENROUTER_EMBEDDING_MODEL", "nvidia/nemotron-3-embed-1b:free"
             ),
             chat_model=os.getenv(
-                "OPENROUTER_CHAT_MODEL", "google/gemma-4-31b-it:free"
+                "OPENROUTER_CHAT_MODEL", "google/gemma-4-26b-a4b-it:free"
             ),
             top_k=int(os.getenv("COURSEGROUND_TOP_K", "4")),
             chunk_size=int(os.getenv("COURSEGROUND_CHUNK_SIZE", "900")),

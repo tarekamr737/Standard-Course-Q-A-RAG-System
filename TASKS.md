@@ -32,6 +32,7 @@
 ## 6. Streamlit App
 - [x] Build the UI using the Impeccable skill.
 - [x] Add course selection, file ingestion, indexing status, and chat interface.
+- [x] Allow users to create a persistent new course from the sidebar.
 - [x] Display answers, citations, retrieved excerpts, and source metadata.
 - [x] Add loading, empty, success, warning, and error states.
 - [x] Keep API keys outside the UI and source code.
@@ -48,5 +49,6 @@
 - [x] Add setup instructions, environment variables, architecture, and usage examples to README.
 - [x] Add `.env.example`, dependency file, and sample course data structure.
 - [x] Verify a clean local run and prepare the Streamlit deployment configuration.
+- [x] Prepare GitHub publication safeguards and Streamlit Community Cloud deployment guidance.
 
 > Operational note: CourseGround now detects embedding or chunk-setting changes and requires a re-index before querying. The AI-Based Programming course is indexed with OpenRouter (240 chunks) and its grounded retrieval evaluation passed. The original sample-course indexes remain local-preview indexes until separately rebuilt with OpenRouter embeddings.

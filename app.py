@@ -7,7 +7,7 @@ from pathlib import Path
 
 import streamlit as st
 
-from courseground.config import COURSES, INDEX_DIR, MATERIALS_DIR, UPLOADS_DIR, Settings, ensure_data_directories
+from courseground.config import INDEX_DIR, MATERIALS_DIR, UPLOADS_DIR, Settings, create_course, ensure_data_directories, load_courses
 from courseground.embeddings import embedding_client
 from courseground.indexing import CourseIndexer
 from courseground.loaders import SUPPORTED_EXTENSIONS, discover_course_files
@@ -134,19 +134,49 @@ def save_uploads(course: str, uploads) -> tuple[int, list[str]]:
     return saved, errors
 
 
-def render_sidebar(course: str, settings, store, indexer) -> None:
-    info = COURSES[course]
+def render_sidebar(course: str, courses: dict[str, dict[str, str]], settings, store, indexer) -> None:
+    info = courses[course]
     files = course_files(course)
     chunk_count = store.course_count(course)
     index_current = store.course_index_matches(course, indexer.index_signature())
     with st.sidebar:
         st.markdown("<div class='cg-brand'><span class='cg-mark'>▱</span>CourseGround</div>", unsafe_allow_html=True)
         st.markdown("<div class='cg-eyebrow'>COURSE</div>", unsafe_allow_html=True)
-        selected = st.selectbox("Selected course", list(COURSES), index=list(COURSES).index(course), format_func=lambda code: COURSES[code]["name"], label_visibility="collapsed")
+        selected = st.selectbox("Selected course", list(courses), index=list(courses).index(course), format_func=lambda code: courses[code]["name"], label_visibility="collapsed")
         if selected != course:
             st.session_state.course = selected
             st.session_state.history = []
             st.rerun()
+
+        with st.expander("Create course", icon=":material/add_circle:", expanded=False):
+            with st.form("create_course_form", clear_on_submit=True):
+                new_code = st.text_input("Course code", placeholder="Example: CS501")
+                new_name = st.text_input("Course name", placeholder="Example: Applied Machine Learning")
+                new_description = st.text_area(
+                    "Short description (optional)",
+                    placeholder="What will students learn?",
+                    height=88,
+                )
+                new_question = st.text_input(
+                    "Starter question (optional)",
+                    placeholder="What is the most important concept in this course?",
+                )
+                create_submitted = st.form_submit_button(
+                    "Create course",
+                    type="primary",
+                    icon=":material/add:",
+                    width="stretch",
+                )
+            if create_submitted:
+                try:
+                    created_course = create_course(new_code, new_name, new_description, new_question)
+                except ValueError as error:
+                    st.error(str(error))
+                else:
+                    st.session_state.course = created_course
+                    st.session_state.history = []
+                    st.success("Course created. Upload materials, then build its index.")
+                    st.rerun()
 
         st.markdown("<div class='cg-eyebrow'>INDEX STATUS</div>", unsafe_allow_html=True)
         if chunk_count and index_current:
@@ -194,11 +224,12 @@ def render_sidebar(course: str, settings, store, indexer) -> None:
         st.markdown("<div class='cg-index-card'><strong>Your evidence stays visible</strong><p>Every supported answer includes the retrieved course passages used to answer it.</p></div>", unsafe_allow_html=True)
         st.markdown("<div class='cg-eyebrow'>SETTINGS</div>", unsafe_allow_html=True)
         st.caption(f"Retrieval depth: {settings.top_k} passages")
+        st.caption(f"Answer model: {settings.chat_model}")
         if not settings.openrouter_api_key:
             st.info("Local preview mode is active. Add an OpenRouter key in `.env` for model-generated answers.")
 
 
-def show_answer(answer: Answer) -> None:
+def show_answer(answer: Answer, message_index: int) -> None:
     if not answer.supported:
         st.markdown("<div class='cg-fallback'><span aria-hidden='true'>⌕</span><div><strong>Insufficient course evidence</strong><p>The indexed materials do not support a confident answer. Try a more specific question or index additional sources.</p></div></div>", unsafe_allow_html=True)
         if answer.mode == "generation-error":
@@ -217,8 +248,8 @@ def show_answer(answer: Answer) -> None:
                 unsafe_allow_html=True,
             )
     feedback_a, feedback_b, feedback_c = st.columns([1, 1, 4])
-    feedback_a.button("Helpful", key=f"helpful_{len(st.session_state.history)}", icon=":material/thumb_up:")
-    feedback_b.button("Not helpful", key=f"unhelpful_{len(st.session_state.history)}", icon=":material/thumb_down:")
+    feedback_a.button("Helpful", key=f"helpful_{message_index}", icon=":material/thumb_up:")
+    feedback_b.button("Not helpful", key=f"unhelpful_{message_index}", icon=":material/thumb_down:")
     feedback_c.caption("Answers are grounded in the selected course only.")
 
 
@@ -239,13 +270,15 @@ def submit_question(question: str, course: str, store, indexer, answerer) -> Non
 
 def main() -> None:
     st.markdown(APP_CSS, unsafe_allow_html=True)
-    st.session_state.setdefault("course", "CS4780")
     st.session_state.setdefault("history", [])
-    course = st.session_state.course
     settings, store, indexer, answerer = services()
-    render_sidebar(course, settings, store, indexer)
+    courses = load_courses()
+    if st.session_state.get("course") not in courses:
+        st.session_state.course = next(iter(courses))
+    course = st.session_state.course
+    render_sidebar(course, courses, settings, store, indexer)
 
-    info = COURSES[course]
+    info = courses[course]
     st.markdown(f"<div class='cg-kicker'>{safe(info['short_name'])}</div><h1>Ask your course materials</h1><p class='cg-subtitle'>{safe(info['description'])}</p>", unsafe_allow_html=True)
     if notice := st.session_state.pop("notice", None):
         st.warning(notice)
@@ -269,9 +302,9 @@ def main() -> None:
                 ):
                     submit_question(suggestion, course, store, indexer, answerer)
                     st.rerun()
-        for message in st.session_state.history:
+        for message_index, message in enumerate(st.session_state.history):
             st.markdown(f"<div class='cg-question'>{safe(message['question'])}</div>", unsafe_allow_html=True)
-            show_answer(message["answer"])
+            show_answer(message["answer"], message_index)
 
     with st.bottom:
         with st.form("course_question_form", border=False, clear_on_submit=True):
